@@ -1,4 +1,4 @@
-package strcase
+package genutil
 
 import "testing"
 

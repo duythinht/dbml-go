@@ -1,5 +1,5 @@
 // This package reference from https://github.com/protocolbuffers/protobuf-go/internal/strs/strings.go
-package strcase
+package genutil
 
 import (
 	"bytes"
