@@ -118,29 +118,39 @@ func (g *generator) genTable(table core.Table) error {
 	}
 
 	tableMetadataType := "__tbl_" + tableOriginName
+	tableMetadataColumnsType := tableMetadataType + "_columns"
 
-	f.Commentf("// table '%s' metadata Structure", tableOriginName)
-	f.Type().Id(tableMetadataType).StructFunc(func(group *jen.Group) {
+	f.Commentf("// table '%s' columns list struct", tableOriginName)
+	f.Type().Id(tableMetadataColumnsType).StructFunc(func(group *jen.Group) {
 		for _, column := range table.Columns {
 			group.Id(genutil.NormalLizeGoName(column.Name)).String()
 		}
 	})
 
+	f.Commentf("// table '%s' metadata struct", tableOriginName)
+	f.Type().Id("__tbl_"+tableOriginName).Struct(
+		jen.Id("Name").String(),
+		jen.Id("Columns").Id(tableMetadataColumnsType),
+	)
+
 	tableMetadataVar := "_tbl_" + tableOriginName
 
 	f.Commentf("// table '%s' metadata info", tableOriginName)
 	f.Var().Id(tableMetadataVar).Op("=").Id(tableMetadataType).Values(jen.DictFunc(func(d jen.Dict) {
-		for _, column := range table.Columns {
-			columnName := genutil.NormalLizeGoName(column.Name)
-			columnOriginName := genutil.Normalize(column.Name)
-			d[jen.Id(columnName)] = jen.Lit(columnOriginName)
-		}
+		d[jen.Id("Name")] = jen.Lit(tableOriginName)
+		d[jen.Id("Columns")] = jen.Id(tableMetadataColumnsType).Values(jen.DictFunc(func(d jen.Dict) {
+			for _, column := range table.Columns {
+				columnName := genutil.NormalLizeGoName(column.Name)
+				columnOriginName := genutil.Normalize(column.Name)
+				d[jen.Id(columnName)] = jen.Lit(columnOriginName)
+			}
+		}))
 	}))
 
-	f.Commentf("Columns return list columns's name for table '%s'", tableOriginName)
+	f.Commentf("GetColumns return list columns name for table '%s'", tableOriginName)
 	f.Func().Params(
 		jen.Op("*").Id(tableMetadataType),
-	).Id("Columns").Params().Index().String().Block(
+	).Id("GetColumns").Params().Index().String().Block(
 		jen.Return(jen.Index().String().ValuesFunc(func(g *jen.Group) {
 			for _, col := range cols {
 				g.Lit(col)
@@ -148,30 +158,10 @@ func (g *generator) genTable(table core.Table) error {
 		})),
 	)
 
-	f.Commentf("DataColumns return list columns's name for table '%s' except 'id' columns", tableOriginName)
-	f.Func().Params(
-		jen.Op("*").Id(tableMetadataType),
-	).Id("DataColumns").Params().Index().String().Block(
-		jen.Return(jen.Index().String().ValuesFunc(func(g *jen.Group) {
-			for _, col := range cols {
-				if col != "id" && col != "ID" && col != "Id" {
-					g.Lit(col)
-				}
-			}
-		})),
-	)
-
-	f.Commentf("String return name of table '%s'", tableOriginName)
-	f.Func().Params(
-		jen.Op("*").Id(tableMetadataType),
-	).Id("String").Params().String().Block(
-		jen.Return().Lit(tableOriginName),
-	)
-
-	f.Commentf("TBL return metadata info for table '%s'", tableOriginName)
+	f.Commentf("T return metadata info for table '%s'", tableOriginName)
 	f.Func().Params(
 		jen.Op("*").Id(tableGoTypeName),
-	).Id("TBL").Params().Op("*").Id(tableMetadataType).Block(
+	).Id("T").Params().Op("*").Id(tableMetadataType).Block(
 		jen.Return().Op("&").Id(tableMetadataVar),
 	)
 
