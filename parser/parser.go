@@ -10,7 +10,7 @@ import (
 	"github.com/duythinht/dbml-go/token"
 )
 
-// Parser
+// Parser declaration
 type Parser struct {
 	s *scanner.Scanner
 

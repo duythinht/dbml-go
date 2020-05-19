@@ -97,7 +97,7 @@ func (g *generator) genTable(table core.Table) error {
 			columnOriginName := genutil.Normalize(column.Name)
 			t, ok := g.getJenType(column.Type)
 			if !ok {
-				genColumnErr = fmt.Errorf("type '%s' is not support!", column.Type)
+				genColumnErr = fmt.Errorf("type '%s' is not support", column.Type)
 			}
 			if column.Settings.Note != "" {
 				group.Comment(column.Settings.Note)

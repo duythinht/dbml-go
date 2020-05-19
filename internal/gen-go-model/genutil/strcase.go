@@ -1,4 +1,4 @@
-// This package reference from https://github.com/protocolbuffers/protobuf-go/internal/strs/strings.go
+// Package genutil was reference from https://github.com/protocolbuffers/protobuf-go/internal/strs/strings.go
 package genutil
 
 import (
@@ -48,11 +48,13 @@ var commonInitialisms = map[string]bool{
 	"XSS":   true,
 }
 
+// GoInitialismCamelCase return initialism
 func GoInitialismCamelCase(s string) string {
 	s1 := Initialism(goCamelCase(s))
 	return s1
 }
 
+// Initialism return initialsm string
 func Initialism(s string) string {
 	if s == "_" {
 		return s

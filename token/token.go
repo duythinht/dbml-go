@@ -2,7 +2,7 @@ package token
 
 import "strings"
 
-//Token
+//Token ...
 type Token int
 
 //go:generate stringer -type=Token

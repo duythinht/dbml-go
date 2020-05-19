@@ -63,7 +63,7 @@ type IndexSetting struct {
 	Note   string
 }
 
-// RefType ...
+// RelationshipType ...
 type RelationshipType int
 
 const (
@@ -105,6 +105,7 @@ type Enum struct {
 	Values []EnumValue
 }
 
+// EnumValue ...
 type EnumValue struct {
 	Name string
 	Note string

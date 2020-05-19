@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Generate go model
 func Generate(from string, out string, gopackage string) error {
 	dbml, err := parseDBML(from)
 	if err != nil {

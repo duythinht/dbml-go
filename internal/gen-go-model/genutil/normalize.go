@@ -2,6 +2,10 @@ package genutil
 
 import "strings"
 
+// NormalizeTypeName return name of model type, which normalize
+// eg:
+//	users => User
+// 	categories => category
 func NormalizeTypeName(s string) string {
 	s1 := strings.ReplaceAll(s, " ", "_")
 	if strings.HasSuffix(s1, "us") {
@@ -24,14 +28,17 @@ func NormalizeTypeName(s string) string {
 	return s1
 }
 
+// Normalize return name in underscore
 func Normalize(s string) string {
 	return strings.ReplaceAll(s, " ", "_")
 }
 
+// NormalLizeGoName return normalize GoName
 func NormalLizeGoName(s string) string {
 	return GoInitialismCamelCase(Normalize(s))
 }
 
+//NormalizeGoTypeName return Normalize for Go Type Name
 func NormalizeGoTypeName(s string) string {
 	return GoInitialismCamelCase(NormalizeTypeName(s))
 }
