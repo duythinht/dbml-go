@@ -65,7 +65,7 @@ Table users as U {
   full_name varchar [not null, unique, default: 1]
   created_at timestamp
   country_code int
-  Note: 'khong hieu duoc'
+  Note: 'This is simple note'
 }
 ```
 
@@ -91,39 +91,38 @@ type User struct {
 	CountryCode int    `db:"country_code" json:"country_code" mapstructure:"country_code"`
 }
 
-// table 'users' metadata Structure
-type __tbl_users struct {
+// table 'users' columns list struct
+type __tbl_users_columns struct {
 	ID          string
 	FullName    string
 	CreatedAt   string
 	CountryCode string
 }
 
-// table 'users' metadata info
-var _tbl_users = __tbl_users{
-	CountryCode: "country_code",
-	CreatedAt:   "created_at",
-	FullName:    "full_name",
-	ID:          "id",
+// table 'users' metadata struct
+type __tbl_users struct {
+	Name    string
+	Columns __tbl_users_columns
 }
 
-// Columns return list columns's name for table 'users'
-func (*__tbl_users) Columns() []string {
+// table 'users' metadata info
+var _tbl_users = __tbl_users{
+	Columns: __tbl_users_columns{
+		CountryCode: "country_code",
+		CreatedAt:   "created_at",
+		FullName:    "full_name",
+		ID:          "id",
+	},
+	Name: "users",
+}
+
+// GetColumns return list columns name for table 'users'
+func (*__tbl_users) GetColumns() []string {
 	return []string{"id", "full_name", "created_at", "country_code"}
 }
 
-// DataColumns return list columns's name for table 'users' except 'id' columns
-func (*__tbl_users) DataColumns() []string {
-	return []string{"full_name", "created_at", "country_code"}
-}
-
-// String return name of table 'users'
-func (*__tbl_users) String() string {
-	return "users"
-}
-
-// TBL return metadata info for table 'users'
-func (*User) TBL() *__tbl_users {
+// T return metadata info for table 'users'
+func (*User) T() *__tbl_users {
 	return &_tbl_users
 }
 
