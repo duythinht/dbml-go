@@ -29,11 +29,11 @@ func main() {
 	parser := parser.NewParser(s)
 	dbml, err := parser.Parse()
 	if err != nil {
-        fmt.Printf("%s\n", err)
-        os.Exit(1)
-    }
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
 
-    // process dbml here
+	// process dbml here
 }
 ```
 
