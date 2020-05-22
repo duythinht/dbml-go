@@ -9,11 +9,12 @@ type Opts struct {
 	FieldTags        []string
 	ShouldGenTblName bool
 	RememberAlias    bool
+	Recursive        bool
 }
 
 // Generate go model
 func Generate(opts Opts) {
-	dbmls := parseDBML(opts.From)
+	dbmls := parseDBML(opts.From, opts.Recursive)
 
 	g := newgen()
 	g.out = opts.Out
