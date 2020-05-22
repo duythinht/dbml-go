@@ -48,6 +48,7 @@ Usage:
   dbml-gen-go-model [flags]
 
 Flags:
+  -t, --fieldtags stringArray   go field tags (default [db,json,mapstructure])
   -f, --from string      source of dbml, can be https://dbdiagram.io/... | file_name.dbml (default "database.dbml")
   -h, --help             help for dbml-gen-go-model
   -o, --out string       output folder (default "model")
