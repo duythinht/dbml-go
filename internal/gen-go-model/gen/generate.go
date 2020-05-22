@@ -5,10 +5,11 @@ import (
 )
 
 type Opts struct {
-	From      string
-	Out       string
-	Package   string
-	FieldTags []string
+	From             string
+	Out              string
+	Package          string
+	FieldTags        []string
+	ShouldGenTblName bool
 }
 
 // Generate go model
@@ -24,5 +25,6 @@ func Generate(ops Opts) error {
 	g.out = ops.Out
 	g.gopackage = ops.Package
 	g.fieldtags = ops.FieldTags
+	g.shouldGenTblName = ops.ShouldGenTblName
 	return g.generate()
 }

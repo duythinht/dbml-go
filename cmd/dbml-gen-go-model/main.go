@@ -10,20 +10,22 @@ import (
 func main() {
 
 	var (
-		from      = "database.dbml"
-		out       = "model"
-		gopackage = "model"
-		fieldtags = []string{"db", "json", "mapstructure"}
+		from             = "database.dbml"
+		out              = "model"
+		gopackage        = "model"
+		fieldtags        = []string{"db", "json", "mapstructure"}
+		shouldGenTblName = false
 	)
 
 	cmd := &cobra.Command{
 		Use: "dbml-gen-go-model",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return gen.Generate(gen.Opts{
-				From:      from,
-				Out:       out,
-				Package:   gopackage,
-				FieldTags: fieldtags,
+				From:             from,
+				Out:              out,
+				Package:          gopackage,
+				FieldTags:        fieldtags,
+				ShouldGenTblName: shouldGenTblName,
 			})
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -35,6 +37,7 @@ func main() {
 	flags.StringVarP(&out, "out", "o", out, "output folder")
 	flags.StringVarP(&gopackage, "package", "p", gopackage, "single for multiple files")
 	flags.StringArrayVarP(&fieldtags, "fieldtags", "t", fieldtags, "go field tags")
+	flags.BoolVarP(&shouldGenTblName, "gen-table-name", "", shouldGenTblName, "should generate \"TableName\" function")
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("Error %s", err)
 	}
