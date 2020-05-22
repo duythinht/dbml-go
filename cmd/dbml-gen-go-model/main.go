@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strings"
 
 	"github.com/duythinht/dbml-go/internal/gen-go-model/gen"
 	"github.com/spf13/cobra"
@@ -14,7 +13,7 @@ func main() {
 		from      = "database.dbml"
 		out       = "model"
 		gopackage = "model"
-		fieldtags = "db,json,mapstructure"
+		fieldtags = []string{"db", "json", "mapstructure"}
 	)
 
 	cmd := &cobra.Command{
@@ -24,7 +23,7 @@ func main() {
 				From:      from,
 				Out:       out,
 				Package:   gopackage,
-				FieldTags: strings.Split(fieldtags, ","),
+				FieldTags: fieldtags,
 			})
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -35,7 +34,7 @@ func main() {
 	flags.StringVarP(&from, "from", "f", from, "source of dbml, can be https://dbdiagram.io/... | fire_name.dbml")
 	flags.StringVarP(&out, "out", "o", out, "output folder")
 	flags.StringVarP(&gopackage, "package", "p", gopackage, "single for multiple files")
-	flags.StringVarP(&fieldtags, "fieldtags", "t", fieldtags, "go field tags")
+	flags.StringArrayVarP(&fieldtags, "fieldtags", "t", fieldtags, "go field tags")
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("Error %s", err)
 	}
