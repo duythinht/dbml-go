@@ -15,18 +15,21 @@ func main() {
 		gopackage        = "model"
 		fieldtags        = []string{"db", "json", "mapstructure"}
 		shouldGenTblName = false
+		rememberAlias    = false
 	)
 
 	cmd := &cobra.Command{
 		Use: "dbml-gen-go-model",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return gen.Generate(gen.Opts{
+			gen.Generate(gen.Opts{
 				From:             from,
 				Out:              out,
 				Package:          gopackage,
 				FieldTags:        fieldtags,
 				ShouldGenTblName: shouldGenTblName,
+				RememberAlias:    rememberAlias,
 			})
+			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -38,6 +41,7 @@ func main() {
 	flags.StringVarP(&gopackage, "package", "p", gopackage, "single for multiple files")
 	flags.StringArrayVarP(&fieldtags, "fieldtags", "t", fieldtags, "go field tags")
 	flags.BoolVarP(&shouldGenTblName, "gen-table-name", "", shouldGenTblName, "should generate \"TableName\" function")
+	flags.BoolVarP(&rememberAlias, "remember-alias", "", rememberAlias, "should remember table alias. Only applied if \"from\" is a directory")
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("Error %s", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -22,13 +23,47 @@ const (
 
 var re = regexp.MustCompile(dbdiagramURLPattern)
 
-func parseDBML(from string) (*core.DBML, error) {
-	r, err := dbmlReader(from)
-	if err != nil {
-		return nil, err
+func parseDBML(from string) (ret []*core.DBML) {
+	files := collectFiles(from)
+	for _, f := range files {
+		r, err := dbmlReader(f)
+		if err != nil {
+			fmt.Printf("Error read file %s: %s", f, err)
+			continue
+		}
+
+		p := parser.NewParser(scanner.NewScanner(r))
+		dbml, err := p.Parse()
+		if err != nil {
+			fmt.Printf("Error parse file %s: %s", f, err)
+			continue
+		}
+		ret = append(ret, dbml)
 	}
-	p := parser.NewParser(scanner.NewScanner(r))
-	return p.Parse()
+	return
+}
+
+func collectFiles(from string) []string {
+	stat, err := os.Stat(from)
+	if err != nil {
+		fmt.Printf("Invalid from parameter %s", err)
+		return []string{}
+	}
+
+	// single file
+	if !stat.IsDir() {
+		return []string{from}
+	}
+
+	// directory
+	files := []string{}
+	filepath.Walk(from, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files
 }
 
 func dbmlReader(from string) (io.Reader, error) {

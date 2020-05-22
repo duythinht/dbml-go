@@ -25,6 +25,13 @@ func newgen() *generator {
 	}
 }
 
+func (g *generator) reset(rememberAlias bool) {
+	g.dbml = nil
+	if !rememberAlias {
+		g.types = make(map[string]jen.Code)
+	}
+}
+
 func (g *generator) file() *jen.File {
 	return jen.NewFilePathName(g.out, g.gopackage)
 }

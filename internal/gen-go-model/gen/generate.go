@@ -1,8 +1,6 @@
 package gen
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type Opts struct {
 	From             string
@@ -10,21 +8,25 @@ type Opts struct {
 	Package          string
 	FieldTags        []string
 	ShouldGenTblName bool
+	RememberAlias    bool
 }
 
 // Generate go model
-func Generate(ops Opts) error {
-	dbml, err := parseDBML(ops.From)
-	if err != nil {
-		fmt.Printf("Error parse %s", err)
-		return err
-	}
+func Generate(opts Opts) {
+	dbmls := parseDBML(opts.From)
 
 	g := newgen()
-	g.dbml = dbml
-	g.out = ops.Out
-	g.gopackage = ops.Package
-	g.fieldtags = ops.FieldTags
-	g.shouldGenTblName = ops.ShouldGenTblName
-	return g.generate()
+	g.out = opts.Out
+	g.gopackage = opts.Package
+	g.fieldtags = opts.FieldTags
+	g.shouldGenTblName = opts.ShouldGenTblName
+
+	for _, dbml := range dbmls {
+		g.reset(opts.RememberAlias)
+		g.dbml = dbml
+		if err := g.generate(); err != nil {
+			fmt.Printf("Error generate file %s", err)
+		}
+	}
+
 }
