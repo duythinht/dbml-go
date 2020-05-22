@@ -19,6 +19,10 @@ func Generate(ops Opts) error {
 		return err
 	}
 
-	g := newgen(dbml, ops.Out, ops.Package)
+	g := newgen()
+	g.dbml = dbml
+	g.out = ops.Out
+	g.gopackage = ops.Package
+	g.fieldtags = ops.FieldTags
 	return g.generate()
 }

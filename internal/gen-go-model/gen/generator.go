@@ -3,6 +3,7 @@ package gen
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/duythinht/dbml-go/core"
@@ -13,15 +14,13 @@ type generator struct {
 	dbml      *core.DBML
 	out       string
 	gopackage string
+	fieldtags []string
 	types     map[string]jen.Code
 }
 
-func newgen(dbml *core.DBML, out string, gopackage string) *generator {
+func newgen() *generator {
 	return &generator{
-		dbml:      dbml,
-		out:       out,
-		gopackage: gopackage,
-		types:     make(map[string]jen.Code),
+		types: make(map[string]jen.Code),
 	}
 }
 
@@ -102,13 +101,12 @@ func (g *generator) genTable(table core.Table) error {
 			if column.Settings.Note != "" {
 				group.Comment(column.Settings.Note)
 			}
-			group.Id(columnName).Add(t).Tag(map[string]string{
-				"json": columnOriginName,
-				"db":   columnOriginName,
-				// due to alot of case to cover, then I drop support for GORM
-				// "gorm":         columnOriginName,
-				"mapstructure": columnOriginName,
-			})
+
+			gotags := make(map[string]string)
+			for _, t := range g.fieldtags {
+				gotags[strings.TrimSpace(t)] = columnOriginName
+			}
+			group.Id(columnName).Add(t).Tag(gotags)
 			cols = append(cols, columnOriginName)
 		}
 	})
