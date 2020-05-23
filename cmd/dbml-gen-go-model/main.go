@@ -17,6 +17,7 @@ func main() {
 		shouldGenTblName = false
 		rememberAlias    = false
 		recursive        = false
+		exclude          = ""
 	)
 
 	cmd := &cobra.Command{
@@ -30,6 +31,7 @@ func main() {
 				ShouldGenTblName: shouldGenTblName,
 				RememberAlias:    rememberAlias,
 				Recursive:        recursive,
+				Exclude:          exclude,
 			})
 			return nil
 		},
@@ -45,6 +47,7 @@ func main() {
 	flags.BoolVarP(&shouldGenTblName, "gen-table-name", "", shouldGenTblName, "should generate \"TableName\" function")
 	flags.BoolVarP(&rememberAlias, "remember-alias", "", rememberAlias, "should remember table alias. Only applied if \"from\" is a directory")
 	flags.BoolVarP(&recursive, "recursive", "", recursive, "recursive search directory. Only applied if \"from\" is a directory")
+	flags.StringVarP(&exclude, "exclude", "E", exclude, "regex for exclude \"from\" files. Only applied if \"from\" is a directory")
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("Error %s", err)
 	}

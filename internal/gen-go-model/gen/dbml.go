@@ -23,8 +23,8 @@ const (
 
 var re = regexp.MustCompile(dbdiagramURLPattern)
 
-func parseDBML(from string, recursive bool) (ret []*core.DBML) {
-	files := collectFiles(from, recursive)
+func parseDBML(from string, recursive bool, exclude *regexp.Regexp) (ret []*core.DBML) {
+	files := collectFiles(from, recursive, exclude)
 	for _, f := range files {
 		r, err := dbmlReader(f)
 		if err != nil {
@@ -43,7 +43,7 @@ func parseDBML(from string, recursive bool) (ret []*core.DBML) {
 	return
 }
 
-func collectFiles(from string, recursive bool) []string {
+func collectFiles(from string, recursive bool, exclude *regexp.Regexp) []string {
 	stat, err := os.Stat(from)
 	if err != nil {
 		fmt.Printf("Invalid from parameter %s", err)
@@ -60,6 +60,10 @@ func collectFiles(from string, recursive bool) []string {
 	filepath.Walk(from, func(path string, info os.FileInfo, err error) error {
 		if path != from && info.IsDir() && !recursive {
 			return filepath.SkipDir
+		}
+		if exclude != nil && exclude.MatchString(path) {
+			fmt.Println("Match exclude pattern: ", path)
+			return nil
 		}
 		files = append(files, path)
 		return nil

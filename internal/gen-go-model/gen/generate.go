@@ -1,6 +1,10 @@
 package gen
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 type Opts struct {
 	From             string
@@ -10,11 +14,17 @@ type Opts struct {
 	ShouldGenTblName bool
 	RememberAlias    bool
 	Recursive        bool
+	Exclude          string
 }
 
 // Generate go model
 func Generate(opts Opts) {
-	dbmls := parseDBML(opts.From, opts.Recursive)
+	var pattern *regexp.Regexp
+	if strings.TrimSpace(opts.Exclude) != "" {
+		pattern, _ = regexp.Compile(opts.Exclude)
+	}
+
+	dbmls := parseDBML(opts.From, opts.Recursive, pattern)
 
 	g := newgen()
 	g.out = opts.Out
