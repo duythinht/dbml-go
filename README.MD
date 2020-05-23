@@ -48,6 +48,7 @@ Usage:
   dbml-gen-go-model [flags]
 
 Flags:
+  -E, --exclude string          regex for exclude "from" files. Only applied if "from" is a directory
   -t, --fieldtags stringArray   go field tags (default [db,json,mapstructure])
   -f, --from string             source of dbml, can be https://dbdiagram.io/... | fire_name.dbml (default "database.dbml")
       --gen-table-name          should generate "TableName" function
