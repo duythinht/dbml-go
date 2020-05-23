@@ -49,10 +49,13 @@ Usage:
 
 Flags:
   -t, --fieldtags stringArray   go field tags (default [db,json,mapstructure])
-  -f, --from string      source of dbml, can be https://dbdiagram.io/... | file_name.dbml (default "database.dbml")
-  -h, --help             help for dbml-gen-go-model
-  -o, --out string       output folder (default "model")
-  -p, --package string   single for multiple files (default "model")
+  -f, --from string             source of dbml, can be https://dbdiagram.io/... | fire_name.dbml (default "database.dbml")
+      --gen-table-name          should generate "TableName" function
+  -h, --help                    help for dbml-gen-go-model
+  -o, --out string              output folder (default "model")
+  -p, --package string          single for multiple files (default "model")
+      --recursive               recursive search directory. Only applied if "from" is a directory
+      --remember-alias          should remember table alias. Only applied if "from" is a directory
 ```
 
 #### Example:

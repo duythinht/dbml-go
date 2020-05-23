@@ -11,16 +11,24 @@ import (
 )
 
 type generator struct {
-	dbml      *core.DBML
-	out       string
-	gopackage string
-	fieldtags []string
-	types     map[string]jen.Code
+	dbml             *core.DBML
+	out              string
+	gopackage        string
+	fieldtags        []string
+	types            map[string]jen.Code
+	shouldGenTblName bool
 }
 
 func newgen() *generator {
 	return &generator{
 		types: make(map[string]jen.Code),
+	}
+}
+
+func (g *generator) reset(rememberAlias bool) {
+	g.dbml = nil
+	if !rememberAlias {
+		g.types = make(map[string]jen.Code)
 	}
 }
 
@@ -163,12 +171,14 @@ func (g *generator) genTable(table core.Table) error {
 		jen.Return().Op("&").Id(tableMetadataVar),
 	)
 
-	f.Commentf("TableName return table name")
-	f.Func().Params(
-		jen.Id(tableGoTypeName),
-	).Id("TableName").Params().Id("string").Block(
-		jen.Return(jen.Lit(tableOriginName)),
-	)
+	if g.shouldGenTblName {
+		f.Commentf("TableName return table name")
+		f.Func().Params(
+			jen.Id(tableGoTypeName),
+		).Id("TableName").Params().Id("string").Block(
+			jen.Return(jen.Lit(tableOriginName)),
+		)
+	}
 
 	return f.Save(fmt.Sprintf("%s/%s.table.go", g.out, genutil.Normalize(table.Name)))
 }
