@@ -16,22 +16,25 @@ type Project struct {
 	Name         string
 	Note         string
 	DatabaseType string
+	Annotations  map[string]string
 }
 
 // Table ...
 type Table struct {
-	Name    string
-	As      string
-	Note    string
-	Columns []Column
-	Indexes []Index
+	Name        string
+	As          string
+	Note        string
+	Annotations map[string]string
+	Columns     []Column
+	Indexes     []Index
 }
 
 // Column ...
 type Column struct {
-	Name     string
-	Type     string
-	Settings ColumnSetting
+	Name        string
+	Type        string
+	Settings    ColumnSetting
+	Annotations map[string]string
 }
 
 // ColumnSetting ...

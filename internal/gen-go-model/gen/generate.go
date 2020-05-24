@@ -7,14 +7,14 @@ import (
 )
 
 type Opts struct {
-	From             string
-	Out              string
-	Package          string
-	FieldTags        []string
-	ShouldGenTblName bool
-	RememberAlias    bool
-	Recursive        bool
-	Exclude          string
+	From                  string
+	Out                   string
+	Package               string
+	FieldTags             []string
+	ShouldGenTblName      bool
+	ShouldParseAnnotation bool
+	Recursive             bool
+	Exclude               string
 }
 
 // Generate go model
@@ -24,7 +24,7 @@ func Generate(opts Opts) {
 		pattern, _ = regexp.Compile(opts.Exclude)
 	}
 
-	dbmls := parseDBML(opts.From, opts.Recursive, pattern)
+	dbmls := parseDBML(opts.From, opts.Recursive, opts.ShouldParseAnnotation, pattern)
 
 	g := newgen()
 	g.out = opts.Out
@@ -33,7 +33,6 @@ func Generate(opts Opts) {
 	g.shouldGenTblName = opts.ShouldGenTblName
 
 	for _, dbml := range dbmls {
-		g.reset(opts.RememberAlias)
 		g.dbml = dbml
 		if err := g.generate(); err != nil {
 			fmt.Printf("Error generate file %s", err)
