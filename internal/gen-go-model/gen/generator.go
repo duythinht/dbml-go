@@ -10,6 +10,11 @@ import (
 	"github.com/duythinht/dbml-go/internal/gen-go-model/genutil"
 )
 
+const (
+	GoTypeAnnotation    = "gotype"
+	GoPointerAnnotation = "gopointer"
+)
+
 type generator struct {
 	dbml             *core.DBML
 	out              string
@@ -22,13 +27,6 @@ type generator struct {
 func newgen() *generator {
 	return &generator{
 		types: make(map[string]jen.Code),
-	}
-}
-
-func (g *generator) reset(rememberAlias bool) {
-	g.dbml = nil
-	if !rememberAlias {
-		g.types = make(map[string]jen.Code)
 	}
 }
 
@@ -102,9 +100,12 @@ func (g *generator) genTable(table core.Table) error {
 		for _, column := range table.Columns {
 			columnName := genutil.NormalLizeGoName(column.Name)
 			columnOriginName := genutil.Normalize(column.Name)
-			t, ok := g.getJenType(column.Type)
+			t, ok := g.getJenType(column)
 			if !ok {
 				genColumnErr = fmt.Errorf("type '%s' is not support", column.Type)
+			}
+			if strings.ToLower(column.Annotations[GoPointerAnnotation]) == "true" {
+				t = jen.Op("*").Add(t)
 			}
 			if column.Settings.Note != "" {
 				group.Comment(column.Settings.Note)
@@ -213,14 +214,33 @@ var (
 	}
 )
 
-func (g *generator) getJenType(s string) (jen.Code, bool) {
-	m := regexType.FindStringSubmatch(s)
+func (g *generator) getJenType(col core.Column) (jen.Code, bool) {
+	// generate from annotation
+	t, ok := getJenTypeFromAnnotation(col.Annotations[GoTypeAnnotation])
+	if ok {
+		return t, ok
+	}
+
+	// generate from column type
+	m := regexType.FindStringSubmatch(col.Type)
 	if len(m) >= 2 {
 		// lookup for builtin type
 		if t, ok := builtinTypes[m[1]]; ok {
 			return t, ok
 		}
 	}
-	t, ok := g.types[s]
+	t, ok = g.types[col.Type]
 	return t, ok
+}
+
+func getJenTypeFromAnnotation(s string) (jen.Code, bool) {
+	if len(s) == 0 {
+		return nil, false
+	}
+
+	parts := strings.Split(s, ":")
+	if len(parts) >= 2 {
+		return jen.Qual(parts[0], parts[1]), true
+	}
+	return jen.Id(parts[0]), true
 }

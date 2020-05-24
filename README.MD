@@ -55,8 +55,8 @@ Flags:
   -h, --help                    help for dbml-gen-go-model
   -o, --out string              output folder (default "model")
   -p, --package string          single for multiple files (default "model")
+      --parse-annotation        Should parse annotations in "note" text
       --recursive               recursive search directory. Only applied if "from" is a directory
-      --remember-alias          should remember table alias. Only applied if "from" is a directory
 ```
 
 #### Example:
@@ -129,6 +129,69 @@ func (*__tbl_users) GetColumns() []string {
 // T return metadata info for table 'users'
 func (*User) T() *__tbl_users {
 	return &_tbl_users
+}
+
+```
+
+## DBML annotations
+
+DBML-go extends DBML with Annotation concepts. Annotation is the markup at the very **beginning** of `note` and only available on `Project`, `Table` and `Column`. Annotation serve the purpose of provide extra information for code generation.
+
+Syntax of annotation as follow: `@{key}({value})`. Multiple annotations are separated by comma `,`. Examples:
+
+- Single annotation: `[note: '@gotype(github.com/foo/bar:CustomValue)']`
+- Multiple annotation: `[note: '@gotype(time:Time), @gopointer(true)']`
+- Mixed with data: `[note: '@gopointer(true) My example note']`
+
+Only these following annotation are understood by DBML-go
+
+#### `gotype`
+
+Annotate on DBML `Column`. The annotated column will be generated with that Go Struct.
+
+For example: you have a custom struct `github.com/foo/bar:CustomValue` which implement `sql.Scanner` and `driver.Valuer`. This struct will be serialized into DB as `varchar`. Then you can have as follow:
+
+```dbml
+// database.dbml
+Table users as U {
+  my_custom_value varchar [note:'@gotype(github.com/foo/bar:CustomValue)']
+}
+```
+
+Then the generated struct is:
+
+```go
+package model
+
+// User is generated type for table 'users'
+type User struct {
+  // @gotype(github.com/foo/bar:CustomValue)
+  MyCustomValue bar.CustomValue `gorm:"my_custom_value"`
+}
+
+```
+
+#### `gopointer`
+
+Annotate on DBML `Column`. The annotated column will be generated as pointer of the target struct. Annotation value must be `"true"`
+
+For example:
+```dbml
+// database.dbml
+Table users as U {
+  my_custom_value varchar [note:'@gopointer(true)']
+}
+```
+
+Then the generated struct is:
+
+```go
+package model
+
+// User is generated type for table 'users'
+type User struct {
+  // @gopointer(true)
+  MyCustomValue *string `gorm:"my_custom_value"`
 }
 
 ```

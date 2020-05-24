@@ -23,7 +23,7 @@ const (
 
 var re = regexp.MustCompile(dbdiagramURLPattern)
 
-func parseDBML(from string, recursive bool, exclude *regexp.Regexp) (ret []*core.DBML) {
+func parseDBML(from string, recursive bool, parseAnnotation bool, exclude *regexp.Regexp) (ret []*core.DBML) {
 	files := collectFiles(from, recursive, exclude)
 	for _, f := range files {
 		r, err := dbmlReader(f)
@@ -33,6 +33,7 @@ func parseDBML(from string, recursive bool, exclude *regexp.Regexp) (ret []*core
 		}
 
 		p := parser.NewParser(scanner.NewScanner(r))
+		p.ParseAnnotation = parseAnnotation
 		dbml, err := p.Parse()
 		if err != nil {
 			fmt.Printf("Error parse file %s: %s", f, err)

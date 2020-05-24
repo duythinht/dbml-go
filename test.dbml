@@ -17,8 +17,9 @@ Table users as U {
 
 Table merchants {
   id int [pk]
-  merchant_name varchar
-  country_code int [not null]
+  merchant_name varchar [note: '@gopointer(true)']
+  country_code varchar [not null]
+  updated_at varchar [note:'@gotype(time:Time)']
   'created at' varchar
   admin_id int [ref: > U.id] // inline relationship (many-to-one)
 }
@@ -33,7 +34,7 @@ Table countries {
 // You can also define relaionship separately
 // > many-to-one; < one-to-many; - one-to-one
 Ref{
-  U.country_code > countries.code  
+  U.country_code > countries.code
   merchants.country_code > countries.code
 }
 
@@ -44,7 +45,7 @@ Ref{
 
 Table order_items {
   order_id int [ref: > orders.id]
-  product_id int    
+  product_id int
   quantity int [default: 1] // default value
 }
 
@@ -63,7 +64,7 @@ Table int {
 
 //----------------------------------------------//
 
-//// -- Level 3 
+//// -- Level 3
 //// -- Enum, Indexes
 
 // Enum for 'products' table below
@@ -73,7 +74,7 @@ Enum products_status {
   running_low [note: 'less than 20'] // add column note
 }
 
-// Indexes: You can define a single or multi-column index 
+// Indexes: You can define a single or multi-column index
 Table products {
   id int [pk]
   name varchar
@@ -81,7 +82,7 @@ Table products {
   price int
   status products_status
   created_at datetime [default: `now()`]
-  
+
   Indexes {
     (merchant_id, status) [name:'product_status', type: hash]
     id [unique]
