@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/duythinht/dbml-go/annotations"
 	"github.com/duythinht/dbml-go/core"
 	"github.com/duythinht/dbml-go/scanner"
 	"github.com/duythinht/dbml-go/token"
@@ -19,8 +18,7 @@ type Parser struct {
 	token token.Token
 	lit   string
 
-	Debug           bool
-	ParseAnnotation bool
+	Debug bool
 }
 
 // NewParser ...
@@ -44,18 +42,12 @@ func (p *Parser) Parse() (*core.DBML, error) {
 			if err != nil {
 				return nil, err
 			}
-			if p.ParseAnnotation {
-				project.Annotations = annotations.Parse(annotations.NewStringScanner(project.Note))
-			}
 			p.debug("project", project)
 			dbml.Project = *project
 		case token.TABLE:
 			table, err := p.parseTable()
 			if err != nil {
 				return nil, err
-			}
-			if p.ParseAnnotation {
-				table.Annotations = annotations.Parse(annotations.NewStringScanner(table.Note))
 			}
 			p.debug("table", table)
 
@@ -259,9 +251,6 @@ func (p *Parser) parseTable() (*core.Table, error) {
 				column, err := p.parseColumn()
 				if err != nil {
 					return nil, err
-				}
-				if p.ParseAnnotation {
-					column.Annotations = annotations.Parse(annotations.NewStringScanner(column.Settings.Note))
 				}
 				table.Columns = append(table.Columns, *column)
 			case token.NOTE:
