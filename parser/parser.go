@@ -247,19 +247,6 @@ func (p *Parser) parseTable() (*core.Table, error) {
 		p.next()
 		for {
 			switch p.token {
-			case token.IDENT, token.STRING, token.DSTRING:
-				column, err := p.parseColumn()
-				if err != nil {
-					return nil, err
-				}
-				table.Columns = append(table.Columns, *column)
-			case token.NOTE:
-				note, err := p.parseDescription()
-				if err != nil {
-					return nil, err
-				}
-				table.Note = note
-				p.next() // remove latest string
 			case token.INDEXES:
 				indexes, err := p.parseIndexes()
 				if err != nil {
@@ -269,7 +256,23 @@ func (p *Parser) parseTable() (*core.Table, error) {
 			case token.RBRACE:
 				return table, nil
 			default:
-				return nil, p.expect("column type [settings...] | Note | Indexes")
+				columnName := p.lit
+				currentToken := p.token
+				p.next()
+				if currentToken == token.NOTE && p.token == token.COLON {
+					note, err := p.parseString()
+					if err != nil {
+						return nil, err
+					}
+					table.Note = note
+					p.next()
+				} else {
+					column, err := p.parseColumn(columnName)
+					if err != nil {
+						return nil, err
+					}
+					table.Columns = append(table.Columns, *column)
+				}
 			}
 		}
 	default:
@@ -374,11 +377,10 @@ func (p *Parser) parseIndex() (*core.Index, error) {
 	return index, nil
 }
 
-func (p *Parser) parseColumn() (*core.Column, error) {
+func (p *Parser) parseColumn(name string) (*core.Column, error) {
 	column := &core.Column{
-		Name: p.lit,
+		Name: name,
 	}
-	p.next()
 	if p.token != token.IDENT {
 		return nil, p.expect("int, varchar,...")
 	}

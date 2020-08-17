@@ -12,6 +12,8 @@ Table users as U {
   full_name varchar [not null, unique, default: 1]
   created_at timestamp
   country_code int
+  type int
+  note int
   Note: 'khong hieu duoc'
 }
 
