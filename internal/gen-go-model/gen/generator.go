@@ -209,6 +209,7 @@ var (
 		"byte":      jen.Byte(),
 		"rune":      jen.Rune(),
 		"timestamp": jen.Int(),
+		"json":      jen.Qual("gorm.io/datatypes", "JSON"),
 		"datetime":  jen.Qual("time", "Time"),
 	}
 )

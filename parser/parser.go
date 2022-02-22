@@ -126,7 +126,8 @@ func (p *Parser) parseEnum() (*core.Enum, error) {
 	}
 	p.next()
 
-	for p.token == token.IDENT {
+	for p.token == token.IDENT || p.token == token.KEY ||
+		p.token == token.DEFAULT || p.token == token.TYPE {
 		enumValue := core.EnumValue{
 			Name: p.lit,
 		}
@@ -207,6 +208,8 @@ func (p *Parser) parseRelationship() (*core.Relationship, error) {
 	rel.From = p.lit
 
 	p.next()
+	t := p.token
+	print(t)
 	if reltype, ok := core.RelationshipMap[p.token]; ok {
 		rel.Type = reltype
 	} else {
@@ -224,7 +227,8 @@ func (p *Parser) parseRelationship() (*core.Relationship, error) {
 func (p *Parser) parseTable() (*core.Table, error) {
 	table := &core.Table{}
 	p.next()
-	if p.token != token.IDENT && p.token != token.DSTRING {
+	if p.token != token.IDENT && p.token != token.DSTRING &&
+		p.token != token.PROJECT && p.token != token.ACTION {
 		return nil, fmt.Errorf("Table name is invalid: %s", p.lit)
 	}
 	table.Name = p.lit
@@ -309,7 +313,10 @@ func (p *Parser) parseIndex() (*core.Index, error) {
 
 	if p.token == token.LPAREN {
 		p.next()
-		for p.token == token.IDENT {
+
+		for p.token == token.IDENT || p.token == token.KEY ||
+			p.token == token.ACTION || p.token == token.TYPE ||
+			p.token == token.PROJECT || p.token == token.DEFAULT {
 			index.Fields = append(index.Fields, p.lit)
 			p.next()
 			if p.token == token.COMMA {
