@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/duythinht/dbml-go/internal/gen-go-model/gen"
 	"github.com/spf13/cobra"
+	"github.com/thanhpd56/dbml-go/internal/gen-go-model/gen"
 )
 
 func main() {

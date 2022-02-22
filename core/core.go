@@ -1,6 +1,6 @@
 package core
 
-import "github.com/duythinht/dbml-go/token"
+import "github.com/thanhpd56/dbml-go/token"
 
 // DBML structure
 type DBML struct {
