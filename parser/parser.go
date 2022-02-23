@@ -439,6 +439,7 @@ func (p *Parser) parseColumnSettings() (*core.ColumnSetting, error) {
 				return nil, p.expect("KEY")
 			}
 			columnSetting.PK = true
+			columnSetting.Null = false
 		case token.REF:
 			p.next()
 			if p.token != token.COLON {
@@ -464,6 +465,7 @@ func (p *Parser) parseColumnSettings() (*core.ColumnSetting, error) {
 			columnSetting.Unique = true
 		case token.INCREMENT:
 			columnSetting.Increment = true
+			columnSetting.Null = false
 		case token.DEFAULT:
 			p.next()
 			if p.token != token.COLON {
