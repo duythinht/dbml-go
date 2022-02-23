@@ -13,7 +13,7 @@ func main() {
 		from             = "database.dbml"
 		out              = "model"
 		gopackage        = "model"
-		fieldtags        = []string{"db", "json", "mapstructure"}
+		fieldtags        = []string{"json", "mapstructure"}
 		shouldGenTblName = false
 		rememberAlias    = false
 		recursive        = false

@@ -50,7 +50,8 @@ var commonInitialisms = map[string]bool{
 
 // GoInitialismCamelCase return initialism
 func GoInitialismCamelCase(s string) string {
-	s1 := Initialism(goCamelCase(s))
+	camelCase := goCamelCase(s)
+	s1 := Initialism(camelCase)
 	return s1
 }
 
