@@ -114,7 +114,11 @@ func (g *generator) genTable(table core.Table) error {
 			for _, t := range g.fieldtags {
 				gotags[strings.TrimSpace(t)] = columnOriginName
 			}
-			group.Id(columnName).Add(t).Tag(gotags)
+			if column.Settings.Null && column.Settings.Default == "" {
+				group.Id(columnName).Add(jen.Op("*")).Add(t).Tag(gotags)
+			} else {
+				group.Id(columnName).Add(t).Tag(gotags)
+			}
 			cols = append(cols, columnOriginName)
 		}
 	})
@@ -129,7 +133,8 @@ func (g *generator) genTable(table core.Table) error {
 	f.Commentf("// table '%s' columns list struct", tableOriginName)
 	f.Type().Id(tableMetadataColumnsType).StructFunc(func(group *jen.Group) {
 		for _, column := range table.Columns {
-			group.Id(genutil.NormalLizeGoName(column.Name)).String()
+			name := genutil.NormalLizeGoName(column.Name)
+			group.Id(name).String()
 		}
 	})
 

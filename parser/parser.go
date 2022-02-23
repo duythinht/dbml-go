@@ -208,8 +208,6 @@ func (p *Parser) parseRelationship() (*core.Relationship, error) {
 	rel.From = p.lit
 
 	p.next()
-	t := p.token
-	print(t)
 	if reltype, ok := core.RelationshipMap[p.token]; ok {
 		rel.Type = reltype
 	} else {
@@ -388,6 +386,7 @@ func (p *Parser) parseColumn(name string) (*core.Column, error) {
 	column := &core.Column{
 		Name: name,
 	}
+	column.Settings.Null = true
 	if p.token != token.IDENT {
 		return nil, p.expect("int, varchar,...")
 	}
