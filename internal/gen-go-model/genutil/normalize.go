@@ -18,7 +18,7 @@ func NormalizeTypeName(s string) string {
 
 	for _, suffix := range []string{"oes", "ses", "zes", "xes", "shes", "ches"} {
 		if strings.HasSuffix(s1, suffix) {
-			return s1[:len(s1)-2]
+			return s1[:len(s1)-1]
 		}
 	}
 	if strings.HasSuffix(s1, "s") {
