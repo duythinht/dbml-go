@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+
 	"github.com/thanhpd56/dbml-go/core"
 	"github.com/thanhpd56/dbml-go/internal/gen-go-model/genutil"
 )
@@ -49,8 +50,11 @@ func (g *generator) genEnums() error {
 			return err
 		}
 	}
+
+	toColumnNameToRelationships, fromColumnNameToRelationships := g.getFullRelationShips()
+
 	for _, table := range g.dbml.Tables {
-		if err := g.genTable(table); err != nil {
+		if err := g.genTable(table, toColumnNameToRelationships, fromColumnNameToRelationships); err != nil {
 			return err
 		}
 	}
@@ -85,7 +89,7 @@ func (g *generator) genEnum(enum core.Enum) error {
 	return f.Save(fmt.Sprintf("%s/%s.enum.go", g.out, genutil.Normalize(enum.Name)))
 }
 
-func (g *generator) genTable(table core.Table) error {
+func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[string][]core.Relationship, fromColumnNameToRelationships map[string][]core.Relationship) error {
 	f := jen.NewFilePathName(g.out, g.gopackage)
 
 	tableOriginName := genutil.Normalize(table.Name)
@@ -101,6 +105,7 @@ func (g *generator) genTable(table core.Table) error {
 
 	f.Type().Id(tableGoTypeName).StructFunc(func(group *jen.Group) {
 		for _, column := range table.Columns {
+
 			columnName := genutil.NormalLizeGoName(column.Name)
 			columnOriginName := genutil.Normalize(column.Name)
 			t, ok := g.getJenType(column.Type)
@@ -121,6 +126,71 @@ func (g *generator) genTable(table core.Table) error {
 				group.Id(columnName).Add(t).Tag(gotags)
 			}
 			cols = append(cols, columnOriginName)
+
+			// users.department_id > departments.id
+			fullColumnID := fmt.Sprintf("%s.%s", table.Name, column.Name)
+			// [{from: }]
+			toRelationships := toColumnNameToRelationships[fullColumnID]
+
+			for _, relationship := range toRelationships {
+				// split department_id => to get department
+				relationName := strings.Split(column.Name, "_id")[0]
+				// split departments.id => departments
+				fromTypeName := strings.Split(relationship.From, ".")[0]
+				// normalize to Department
+				fromGoTypeName := genutil.NormalizeGoTypeName(fromTypeName)
+
+				// split departments.id => departments
+				toTypeName := strings.Split(relationship.To, ".")[0]
+				// normalize to Department
+				toGoTypeName := genutil.NormalizeGoTypeName(toTypeName)
+
+				// normalize relationName department to Department
+				fieldName := genutil.NormalizeGoTypeName(relationName)
+				tags := map[string]string{"gorm": fmt.Sprintf("foreignkey:%s", column.Name)}
+
+				if relationship.Type == core.OneToMany {
+					group.Id(fieldName).Id(fromGoTypeName).Tag(tags)
+				} else if relationship.Type == core.OneToOne {
+					group.Id(fieldName).Op("*").Id(fromGoTypeName).Tag(tags)
+				} else if relationship.Type == core.ManyToOne {
+					group.Id(fieldName).Op("*").Id(toGoTypeName).Tag(tags)
+				}
+			}
+			// departments.id > users.department_id
+			fromRelationships := fromColumnNameToRelationships[fullColumnID]
+
+			for _, relationship := range fromRelationships {
+				// users.id => users
+				toTypeName := strings.Split(relationship.To, ".")[0]
+				toColumnName := strings.Split(relationship.To, ".")[1]
+				// users => User
+				toGoTypeName := genutil.NormalizeGoTypeName(toTypeName)
+
+				// users.id => users
+				fromTypeName := strings.Split(relationship.From, ".")[0]
+				// users => User
+				fromGoTypeName := genutil.NormalizeGoTypeName(fromTypeName)
+				tags := map[string]string{"gorm": fmt.Sprintf("foreignkey:%s", toColumnName)}
+
+				if relationship.Type == core.OneToMany {
+					// Users
+					name := genutil.GoInitialismCamelCase(toTypeName)
+					// Users []User
+					group.Id(name).Index().Id(toGoTypeName).Tag(tags)
+
+				} else if relationship.Type == core.OneToOne {
+					// User
+					name := genutil.NormalizeGoTypeName(toTypeName)
+					// User *User
+					group.Id(name).Op("*").Id(toGoTypeName).Tag(tags)
+				} else if relationship.Type == core.ManyToOne {
+					// Users
+					name := genutil.GoInitialismCamelCase(fromTypeName)
+					// Users []User
+					group.Id(name).Index().Id(fromGoTypeName).Tag(tags)
+				}
+			}
 		}
 	})
 
@@ -230,4 +300,50 @@ func (g *generator) getJenType(s string) (jen.Code, bool) {
 	}
 	t, ok := g.types[s]
 	return t, ok
+}
+
+func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[string][]core.Relationship, fromColumnNameToRelationships map[string][]core.Relationship) {
+	toColumnNameToRelationships = map[string][]core.Relationship{}
+	fromColumnNameToRelationships = map[string][]core.Relationship{}
+	for _, ref := range g.dbml.Refs {
+		for _, relationship := range ref.Relationships {
+			toColumnNameToRelationships[relationship.To] = append(toColumnNameToRelationships[relationship.To], relationship)
+			fromColumnNameToRelationships[relationship.From] = append(fromColumnNameToRelationships[relationship.From], relationship)
+		}
+	}
+	for _, table := range g.dbml.Tables {
+		// inline relationships
+		for _, column := range table.Columns {
+			// support inline relationship
+			fullColumnID := fmt.Sprintf("%s.%s", table.Name, column.Name)
+			toRelationships := toColumnNameToRelationships[fullColumnID]
+			fromRelationships := fromColumnNameToRelationships[fullColumnID]
+
+			if column.Settings.Ref.To != "" {
+				toRelationships = append(toRelationships, core.Relationship{
+					From: fullColumnID,
+					To:   column.Settings.Ref.To,
+					Type: column.Settings.Ref.Type,
+				})
+
+				var reverseRefType core.RelationshipType = core.OneToOne
+				if column.Settings.Ref.Type == core.OneToMany {
+					reverseRefType = core.ManyToOne
+				}
+				if column.Settings.Ref.Type == core.ManyToOne {
+					reverseRefType = core.OneToMany
+				}
+				fromRelationships = append(fromRelationships, core.Relationship{
+					From: column.Settings.Ref.To,
+					To:   fullColumnID,
+					Type: reverseRefType,
+				})
+
+				toColumnNameToRelationships[fullColumnID] = toRelationships
+				fromColumnNameToRelationships[column.Settings.Ref.To] = fromRelationships
+			}
+		}
+	}
+
+	return
 }
