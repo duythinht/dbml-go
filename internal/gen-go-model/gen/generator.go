@@ -2,6 +2,7 @@ package gen
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 
@@ -13,9 +14,11 @@ import (
 )
 
 const (
-	GoTypeAnnotation    = "gotype"
-	GoPointerAnnotation = "gopointer"
-	GoTagAnnotation     = "gotag"
+	GoTypeAnnotation       = "gotype"
+	GoPointerAnnotation    = "gopointer"
+	GoTagAnnotation        = "gotag"
+	GoTagFromRefAnnotation = "gotagfromref"
+	GoTagToRefAnnotation   = "gotagtoref"
 )
 
 type generator struct {
@@ -155,6 +158,7 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 			// [{from: }]
 			toRelationships := toColumnNameToRelationships[fullColumnID]
 
+			keyGorm := "gorm"
 			for _, relationship := range toRelationships {
 				// split department_id => to get department
 				relationName := strings.Split(column.Name, "_id")[0]
@@ -170,7 +174,8 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 
 				// normalize relationName department to Department
 				fieldName := genutil.NormalizeGoTypeName(relationName)
-				tags := map[string]string{"gorm": fmt.Sprintf("foreignkey:%s", column.Name)}
+				goTags := appendTagKey(relationship.Tags, keyGorm, fmt.Sprintf("foreignkey:%s", column.Name))
+				tags := tagToMap(goTags)
 
 				if relationship.Type == core.OneToMany {
 					group.Id(fieldName).Id(fromGoTypeName).Tag(tags)
@@ -193,9 +198,10 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 				// users.id => users
 				fromTypeName := strings.Split(relationship.From, ".")[0]
 				// users => User
-				fromGoTypeName := genutil.NormalizeGoTypeName(fromTypeName)
-				tags := map[string]string{"gorm": fmt.Sprintf("foreignkey:%s", toColumnName)}
+				goTags := appendTagKey(relationship.Tags, keyGorm, fmt.Sprintf("foreignkey:%s", toColumnName))
+				tags := tagToMap(goTags)
 
+				fromGoTypeName := genutil.NormalizeGoTypeName(fromTypeName)
 				if relationship.Type == core.OneToMany {
 					// Users
 					name := genutil.GoInitialismCamelCase(toTypeName)
@@ -280,6 +286,19 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 	}
 
 	return f.Save(fmt.Sprintf("%s/%s.table.go", g.out, genutil.Normalize(table.Name)))
+}
+
+func appendTagKey(goTags structtag.Tags, key string, value string) structtag.Tags {
+	_, err := goTags.Get(key)
+	if err != nil { // not exit
+		_ = goTags.Set(&structtag.Tag{
+			Key:  key,
+			Name: value,
+		})
+	} else {
+		goTags.AddOptions(key, value)
+	}
+	return goTags
 }
 
 func tagToMap(tags structtag.Tags) map[string]string {
@@ -368,12 +387,31 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 			fullColumnID := fmt.Sprintf("%s.%s", table.Name, column.Name)
 			toRelationships := toColumnNameToRelationships[fullColumnID]
 			fromRelationships := fromColumnNameToRelationships[fullColumnID]
+			fromRefTagStr, found := column.Annotations[GoTagFromRefAnnotation]
+			fromTags := structtag.Tags{}
+			if found {
+				parse, err := structtag.Parse(fromRefTagStr)
+				if err != nil {
+					log.Fatalf("error when parse tag %s", fromRefTagStr)
+				}
+				fromTags = *parse
+			}
+			toRefTagStr, found := column.Annotations[GoTagToRefAnnotation]
+			toTags := structtag.Tags{}
+			if found {
+				parse, err := structtag.Parse(toRefTagStr)
+				if err != nil {
+					log.Fatalf("error when parse tag %s", toRefTagStr)
+				}
+				toTags = *parse
+			}
 
 			if column.Settings.Ref.To != "" {
 				toRelationships = append(toRelationships, core.Relationship{
 					From: fullColumnID,
 					To:   column.Settings.Ref.To,
 					Type: column.Settings.Ref.Type,
+					Tags: fromTags,
 				})
 
 				var reverseRefType core.RelationshipType = core.OneToOne
@@ -387,6 +425,7 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 					From: column.Settings.Ref.To,
 					To:   fullColumnID,
 					Type: reverseRefType,
+					Tags: toTags,
 				})
 
 				toColumnNameToRelationships[fullColumnID] = toRelationships

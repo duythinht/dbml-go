@@ -1,6 +1,10 @@
 package core
 
-import "github.com/thanhpd56/dbml-go/token"
+import (
+	"github.com/fatih/structtag"
+
+	"github.com/thanhpd56/dbml-go/token"
+)
 
 // DBML structure
 type DBML struct {
@@ -46,6 +50,7 @@ type ColumnSetting struct {
 	Ref       struct {
 		Type RelationshipType
 		To   string
+		Tags *structtag.Tags
 	}
 }
 
@@ -83,6 +88,7 @@ type Relationship struct {
 	From string
 	To   string
 	Type RelationshipType
+	Tags structtag.Tags
 }
 
 //RelationshipMap ...
