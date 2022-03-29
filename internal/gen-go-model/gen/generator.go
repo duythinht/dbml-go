@@ -17,8 +17,8 @@ const (
 	GoTypeAnnotation       = "gotype"
 	GoPointerAnnotation    = "gopointer"
 	GoTagAnnotation        = "gotag"
-	GoTagFromRefAnnotation = "gotagfromref"
-	GoTagToRefAnnotation   = "gotagtoref"
+	GoTagFromRefAnnotation = "gotagref"
+	GoTagToRefAnnotation   = "gotagreversedref"
 )
 
 type generator struct {
