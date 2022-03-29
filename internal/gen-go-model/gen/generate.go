@@ -33,7 +33,6 @@ func Generate(opts Opts) {
 	g.shouldGenTblName = opts.ShouldGenTblName
 
 	for _, dbml := range dbmls {
-		g.reset(opts.RememberAlias)
 		g.dbml = dbml
 		if err := g.generate(); err != nil {
 			fmt.Printf("Error generate file %s", err)

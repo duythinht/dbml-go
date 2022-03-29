@@ -29,9 +29,10 @@ type Table struct {
 
 // Column ...
 type Column struct {
-	Name     string
-	Type     string
-	Settings ColumnSetting
+	Name        string
+	Type        string
+	Settings    ColumnSetting
+	Annotations map[string]string
 }
 
 // ColumnSetting ...

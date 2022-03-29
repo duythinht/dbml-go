@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/thanhpd56/dbml-go/annotations"
 	"github.com/thanhpd56/dbml-go/core"
 	"github.com/thanhpd56/dbml-go/scanner"
 	"github.com/thanhpd56/dbml-go/token"
@@ -270,6 +271,7 @@ func (p *Parser) parseTable() (*core.Table, error) {
 					p.next()
 				} else {
 					column, err := p.parseColumn(columnName)
+					column.Annotations = annotations.Parse(annotations.NewStringScanner(column.Settings.Note))
 					if err != nil {
 						return nil, err
 					}

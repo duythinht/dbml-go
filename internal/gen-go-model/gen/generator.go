@@ -6,9 +6,16 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/fatih/structtag"
 
 	"github.com/thanhpd56/dbml-go/core"
 	"github.com/thanhpd56/dbml-go/internal/gen-go-model/genutil"
+)
+
+const (
+	GoTypeAnnotation    = "gotype"
+	GoPointerAnnotation = "gopointer"
+	GoTagAnnotation     = "gotag"
 )
 
 type generator struct {
@@ -105,25 +112,41 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 
 	f.Type().Id(tableGoTypeName).StructFunc(func(group *jen.Group) {
 		for _, column := range table.Columns {
-
 			columnName := genutil.NormalLizeGoName(column.Name)
 			columnOriginName := genutil.Normalize(column.Name)
-			t, ok := g.getJenType(column.Type)
+			t, ok := g.getJenType(column)
 			if !ok {
 				genColumnErr = fmt.Errorf("type '%s' is not support", column.Type)
 			}
+
+			customTag, found := column.Annotations[GoTagAnnotation]
+			tags := structtag.Tags{}
+			if found {
+				t, err := structtag.Parse(customTag)
+				if err != nil {
+					fmt.Errorf("error why parse tag %s", customTag)
+				}
+				tags = *t
+			}
+
 			if column.Settings.Note != "" {
 				group.Comment(column.Settings.Note)
 			}
 
-			gotags := make(map[string]string)
 			for _, t := range g.fieldtags {
-				gotags[strings.TrimSpace(t)] = columnOriginName
+				_ = tags.Set(&structtag.Tag{
+					Key:     strings.TrimSpace(t),
+					Name:    columnOriginName,
+					Options: nil,
+				})
 			}
+
+			tagValues := tagToMap(tags)
+
 			if column.Settings.Null && column.Settings.Default == "" {
-				group.Id(columnName).Add(jen.Op("*")).Add(t).Tag(gotags)
+				group.Id(columnName).Add(jen.Op("*")).Add(t).Tag(tagValues)
 			} else {
-				group.Id(columnName).Add(t).Tag(gotags)
+				group.Id(columnName).Add(t).Tag(tagValues)
 			}
 			cols = append(cols, columnOriginName)
 
@@ -259,6 +282,14 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 	return f.Save(fmt.Sprintf("%s/%s.table.go", g.out, genutil.Normalize(table.Name)))
 }
 
+func tagToMap(tags structtag.Tags) map[string]string {
+	tagValues := map[string]string{}
+	for _, tag := range tags.Tags() {
+		tagValues[tag.Key] = tag.Value()
+	}
+	return tagValues
+}
+
 const primeTypePattern = `^(\w+)(\(d+\))?`
 
 var (
@@ -290,16 +321,35 @@ var (
 	}
 )
 
-func (g *generator) getJenType(s string) (jen.Code, bool) {
-	m := regexType.FindStringSubmatch(s)
+func (g *generator) getJenType(col core.Column) (jen.Code, bool) {
+	// generate from annotation
+	t, ok := getJenTypeFromAnnotation(col.Annotations[GoTypeAnnotation])
+	if ok {
+		return t, ok
+	}
+
+	// generate from column type
+	m := regexType.FindStringSubmatch(col.Type)
 	if len(m) >= 2 {
 		// lookup for builtin type
 		if t, ok := builtinTypes[m[1]]; ok {
 			return t, ok
 		}
 	}
-	t, ok := g.types[s]
+	t, ok = g.types[col.Type]
 	return t, ok
+}
+
+func getJenTypeFromAnnotation(s string) (jen.Code, bool) {
+	if len(s) == 0 {
+		return nil, false
+	}
+
+	parts := strings.Split(s, ":")
+	if len(parts) >= 2 {
+		return jen.Qual(parts[0], parts[1]), true
+	}
+	return jen.Id(parts[0]), true
 }
 
 func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[string][]core.Relationship, fromColumnNameToRelationships map[string][]core.Relationship) {
