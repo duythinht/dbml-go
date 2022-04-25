@@ -99,6 +99,12 @@ func (g *generator) genEnum(enum core.Enum) error {
 	return f.Save(fmt.Sprintf("%s/%s.enum.go", g.out, genutil.Normalize(enum.Name)))
 }
 
+type fieldDefinition struct {
+	name      string
+	fieldType jen.Code
+	nullable  bool
+}
+
 func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[string][]core.Relationship, fromColumnNameToRelationships map[string][]core.Relationship) error {
 	f := jen.NewFilePathName(g.out, g.gopackage)
 
@@ -112,6 +118,7 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 	var genColumnErr error
 
 	cols := make([]string, 0)
+	fields := []fieldDefinition{}
 
 	f.Type().Id(tableGoTypeName).StructFunc(func(group *jen.Group) {
 		for _, column := range table.Columns {
@@ -147,8 +154,18 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 			tagValues := tagToMap(tags)
 
 			if column.Settings.Null && column.Settings.Default == "" {
+				fields = append(fields, fieldDefinition{
+					name:      columnName,
+					fieldType: t,
+					nullable:  true,
+				})
 				group.Id(columnName).Add(jen.Op("*")).Add(t).Tag(tagValues)
 			} else {
+				fields = append(fields, fieldDefinition{
+					name:      columnName,
+					fieldType: t,
+					nullable:  false,
+				})
 				group.Id(columnName).Add(t).Tag(tagValues)
 			}
 			cols = append(cols, columnOriginName)
@@ -275,6 +292,25 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 	).Id("T").Params().Op("*").Id(tableMetadataType).Block(
 		jen.Return().Op("&").Id(tableMetadataVar),
 	)
+
+	for _, field := range fields {
+		getterName := fmt.Sprintf("Get%s", field.name)
+		f.Commentf(getterName)
+		if field.nullable {
+			f.Func().Params(
+				jen.Id("e").Op("*").Id(tableGoTypeName),
+			).Id(getterName).Params().Op("*").Add(field.fieldType).Block(
+				jen.Return().Id("e").Dot(field.name),
+			)
+		} else {
+			f.Func().Params(
+				jen.Id("e").Op("*").Id(tableGoTypeName),
+			).Id(getterName).Params().Add(field.fieldType).Block(
+				jen.Return().Id("e").Dot(field.name),
+			)
+		}
+
+	}
 
 	if g.shouldGenTblName {
 		f.Commentf("TableName return table name")
