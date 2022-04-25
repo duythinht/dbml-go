@@ -220,6 +220,16 @@ func (p *Parser) parseRelationship() (*core.Relationship, error) {
 		return nil, p.expect("(rel to) table.column_name")
 	}
 	rel.To = p.lit
+
+	p.next()
+	if p.token == token.LBRACK {
+		for {
+			p.next()
+			if p.token == token.RBRACK {
+				return rel, nil
+			}
+		}
+	}
 	return rel, nil
 }
 

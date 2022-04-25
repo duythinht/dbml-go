@@ -376,15 +376,21 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 	fromColumnNameToRelationships = map[string][]core.Relationship{}
 	for _, ref := range g.dbml.Refs {
 		for _, relationship := range ref.Relationships {
-			toColumnNameToRelationships[relationship.To] = append(toColumnNameToRelationships[relationship.To], relationship)
-			fromColumnNameToRelationships[relationship.From] = append(fromColumnNameToRelationships[relationship.From], relationship)
+			fromColumnNameToRelationships[relationship.To] = append(toColumnNameToRelationships[relationship.To], relationship)
+			reverseRelationship := core.Relationship{
+				From: relationship.To,
+				To:   relationship.From,
+				Type: reverseRefType(relationship.Type),
+				Tags: relationship.Tags,
+			}
+			toColumnNameToRelationships[relationship.From] = append(fromColumnNameToRelationships[relationship.From], reverseRelationship)
 		}
 	}
 	for _, table := range g.dbml.Tables {
 		// inline relationships
 		for _, column := range table.Columns {
 			// support inline relationship
-			fullColumnID := fmt.Sprintf("%s.%s", table.Name, column.Name)
+			fullColumnID := getFullColumnName(table.Name, column.Name)
 			toRelationships := toColumnNameToRelationships[fullColumnID]
 			fromRelationships := fromColumnNameToRelationships[fullColumnID]
 			fromRefTagStr, found := column.Annotations[GoTagFromRefAnnotation]
@@ -407,20 +413,15 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 			}
 
 			if column.Settings.Ref.To != "" {
+				refType := column.Settings.Ref.Type
 				toRelationships = append(toRelationships, core.Relationship{
 					From: fullColumnID,
 					To:   column.Settings.Ref.To,
-					Type: column.Settings.Ref.Type,
+					Type: refType,
 					Tags: fromTags,
 				})
 
-				var reverseRefType core.RelationshipType = core.OneToOne
-				if column.Settings.Ref.Type == core.OneToMany {
-					reverseRefType = core.ManyToOne
-				}
-				if column.Settings.Ref.Type == core.ManyToOne {
-					reverseRefType = core.OneToMany
-				}
+				reverseRefType := reverseRefType(refType)
 				fromRelationships = append(fromRelationships, core.Relationship{
 					From: column.Settings.Ref.To,
 					To:   fullColumnID,
@@ -435,4 +436,19 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 	}
 
 	return
+}
+
+func getFullColumnName(tableName string, columnName string) string {
+	return fmt.Sprintf("%s.%s", tableName, columnName)
+}
+
+func reverseRefType(refType core.RelationshipType) core.RelationshipType {
+	var reverseRefType core.RelationshipType = core.OneToOne
+	if refType == core.OneToMany {
+		reverseRefType = core.ManyToOne
+	}
+	if refType == core.ManyToOne {
+		reverseRefType = core.OneToMany
+	}
+	return reverseRefType
 }
