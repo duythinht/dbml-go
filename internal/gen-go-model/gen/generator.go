@@ -412,14 +412,15 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 	fromColumnNameToRelationships = map[string][]core.Relationship{}
 	for _, ref := range g.dbml.Refs {
 		for _, relationship := range ref.Relationships {
-			fromColumnNameToRelationships[relationship.To] = append(toColumnNameToRelationships[relationship.To], relationship)
 			reverseRelationship := core.Relationship{
 				From: relationship.To,
 				To:   relationship.From,
 				Type: reverseRefType(relationship.Type),
 				Tags: relationship.Tags,
 			}
-			toColumnNameToRelationships[relationship.From] = append(fromColumnNameToRelationships[relationship.From], reverseRelationship)
+			fromColumnNameToRelationships[relationship.To] = append(toColumnNameToRelationships[relationship.To], reverseRelationship)
+
+			toColumnNameToRelationships[relationship.From] = append(fromColumnNameToRelationships[relationship.From], relationship)
 		}
 	}
 	for _, table := range g.dbml.Tables {
