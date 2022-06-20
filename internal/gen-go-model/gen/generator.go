@@ -28,6 +28,7 @@ type generator struct {
 	fieldtags        []string
 	types            map[string]jen.Code
 	shouldGenTblName bool
+	excludeTables    []string
 }
 
 func newgen() *generator {
@@ -105,7 +106,19 @@ type fieldDefinition struct {
 	nullable  bool
 }
 
+func containsString(arr []string, value string) bool {
+	for _, str := range arr {
+		if strings.ToLower(str) == strings.ToLower(value) {
+			return true
+		}
+	}
+	return false
+}
+
 func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[string][]core.Relationship, fromColumnNameToRelationships map[string][]core.Relationship) error {
+	if containsString(g.excludeTables, table.Name) {
+		log.Printf("ignore table %s", table.Name)
+	}
 	f := jen.NewFilePathName(g.out, g.gopackage)
 
 	tableOriginName := genutil.Normalize(table.Name)
@@ -121,6 +134,7 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 	fields := []fieldDefinition{}
 
 	f.Type().Id(tableGoTypeName).StructFunc(func(group *jen.Group) {
+
 		for _, column := range table.Columns {
 			columnName := genutil.NormalLizeGoName(column.Name)
 			columnOriginName := genutil.Normalize(column.Name)
@@ -424,6 +438,7 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 		}
 	}
 	for _, table := range g.dbml.Tables {
+
 		// inline relationships
 		for _, column := range table.Columns {
 			// support inline relationship

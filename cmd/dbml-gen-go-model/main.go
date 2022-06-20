@@ -14,6 +14,7 @@ func main() {
 		out              = "model"
 		gopackage        = "model"
 		fieldtags        = []string{"json", "mapstructure"}
+		excludeTables    = []string{}
 		shouldGenTblName = false
 		rememberAlias    = false
 		recursive        = false
@@ -32,6 +33,7 @@ func main() {
 				RememberAlias:    rememberAlias,
 				Recursive:        recursive,
 				Exclude:          exclude,
+				ExcludeTables:    excludeTables,
 			})
 			return nil
 		},
@@ -44,6 +46,7 @@ func main() {
 	flags.StringVarP(&out, "out", "o", out, "output folder")
 	flags.StringVarP(&gopackage, "package", "p", gopackage, "single for multiple files")
 	flags.StringArrayVarP(&fieldtags, "fieldtags", "t", fieldtags, "go field tags")
+	flags.StringArrayVarP(&excludeTables, "exclude-tables", "", excludeTables, "exclude table names")
 	flags.BoolVarP(&shouldGenTblName, "gen-table-name", "", shouldGenTblName, "should generate \"TableName\" function")
 	flags.BoolVarP(&rememberAlias, "remember-alias", "", rememberAlias, "should remember table alias. Only applied if \"from\" is a directory")
 	flags.BoolVarP(&recursive, "recursive", "", recursive, "recursive search directory. Only applied if \"from\" is a directory")
