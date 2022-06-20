@@ -118,6 +118,7 @@ func containsString(arr []string, value string) bool {
 func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[string][]core.Relationship, fromColumnNameToRelationships map[string][]core.Relationship) error {
 	if containsString(g.excludeTables, table.Name) {
 		log.Printf("ignore table %s", table.Name)
+		return nil
 	}
 	f := jen.NewFilePathName(g.out, g.gopackage)
 
