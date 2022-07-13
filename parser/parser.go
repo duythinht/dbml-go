@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/duythinht/dbml-go/core"
@@ -116,8 +117,8 @@ func (p *Parser) parseTableGroup() (*core.TableGroup, error) {
 func (p *Parser) parseEnum() (*core.Enum, error) {
 	enum := &core.Enum{}
 	p.next()
-	if p.token != token.IDENT && p.token != token.DSTRING {
-		return nil, fmt.Errorf("Enum name is invalid: %s", p.lit)
+	if !token.IsIdent(p.token) && p.token != token.DSTRING {
+		return nil, fmt.Errorf("enum name is invalid: %s", p.lit)
 	}
 	enum.Name = p.lit
 	p.next()
@@ -126,7 +127,7 @@ func (p *Parser) parseEnum() (*core.Enum, error) {
 	}
 	p.next()
 
-	for p.token == token.IDENT {
+	for token.IsIdent(p.token) {
 		enumValue := core.EnumValue{
 			Name: p.lit,
 		}
@@ -224,8 +225,13 @@ func (p *Parser) parseRelationship() (*core.Relationship, error) {
 func (p *Parser) parseTable() (*core.Table, error) {
 	table := &core.Table{}
 	p.next()
-	if p.token != token.IDENT && p.token != token.DSTRING {
-		return nil, fmt.Errorf("Table name is invalid: %s", p.lit)
+	switch p.token {
+	case token.IDENT, token.DSTRING:
+		//pass
+	default:
+		if m, _ := regexp.MatchString("^[a-zA-Z1-9]+$", p.lit); !m {
+			return nil, fmt.Errorf("table name is invalid: %s", p.lit)
+		}
 	}
 	table.Name = p.lit
 
@@ -309,7 +315,7 @@ func (p *Parser) parseIndex() (*core.Index, error) {
 
 	if p.token == token.LPAREN {
 		p.next()
-		for p.token == token.IDENT {
+		for token.IsIdent(p.token) {
 			index.Fields = append(index.Fields, p.lit)
 			p.next()
 			if p.token == token.COMMA {
@@ -319,7 +325,7 @@ func (p *Parser) parseIndex() (*core.Index, error) {
 		if p.token != token.RPAREN {
 			return nil, p.expect(")")
 		}
-	} else if p.token == token.IDENT {
+	} else if token.IsIdent(p.token) {
 		index.Fields = append(index.Fields, p.lit)
 	} else {
 		return nil, p.expect("field_name")

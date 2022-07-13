@@ -112,3 +112,45 @@ func TestParseTableWithNoteColumn(t *testing.T) {
 		t.Fatalf("column name should be 'note'")
 	}
 }
+
+func TestAllowKeywordsAsTable(t *testing.T) {
+	parser := p(`
+	Table project {
+		note int
+	}
+	`)
+	dbml, err := parser.Parse()
+
+	//t.Log(err)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	table := dbml.Tables[0]
+	if table.Name != "project" {
+		t.Fatalf("table name should be 'project'")
+	}
+}
+
+func TestAllowKeywordsAsEnum(t *testing.T) {
+	parser := p(`
+	Enum project {
+		key
+	}
+	`)
+	dbml, err := parser.Parse()
+
+	//t.Log(err)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	enum := dbml.Enums[0]
+	if enum.Name != "project" {
+		t.Fatalf("enum name should be 'project'")
+	}
+
+	if enum.Values[0].Name != "key" {
+		t.Fatalf("enum value should be 'key'")
+	}
+}
