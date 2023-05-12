@@ -9,6 +9,8 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/fatih/structtag"
 
+	pluralize "github.com/gertd/go-pluralize"
+
 	"github.com/thanhpd56/dbml-go/core"
 	"github.com/thanhpd56/dbml-go/internal/gen-go-model/genutil"
 )
@@ -104,6 +106,14 @@ type fieldDefinition struct {
 	name      string
 	fieldType jen.Code
 	nullable  bool
+}
+
+func leftOf(str string, strToSplit string) string {
+	idx := strings.LastIndex(str, strToSplit)
+	if idx == 0 {
+		return ""
+	}
+	return str[:idx]
 }
 
 func containsString(arr []string, value string) bool {
@@ -229,14 +239,17 @@ func (g *generator) genTable(table core.Table, toColumnNameToRelationships map[s
 
 				// users.id => users
 				fromTypeName := strings.Split(relationship.From, ".")[0]
+				// user
+				singularFromTypeName := pluralize.NewClient().Singular(fromTypeName)
 				// users => User
 				goTags := appendTagKey(relationship.Tags, keyGorm, fmt.Sprintf("foreignkey:%s", toColumnName))
 				tags := tagToMap(goTags)
 
 				fromGoTypeName := genutil.NormalizeGoTypeName(fromTypeName)
 				if relationship.Type == core.OneToMany {
+					prefix := leftOf(toColumnName, singularFromTypeName+"_id")
 					// Users
-					name := genutil.GoInitialismCamelCase(toTypeName)
+					name := genutil.GoInitialismCamelCase(prefix + toTypeName)
 					// Users []User
 					group.Id(name).Index().Id(toGoTypeName).Tag(tags)
 
@@ -445,7 +458,7 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 			// support inline relationship
 			fullColumnID := getFullColumnName(table.Name, column.Name)
 			toRelationships := toColumnNameToRelationships[fullColumnID]
-			fromRelationships := fromColumnNameToRelationships[fullColumnID]
+			fromRelationships := fromColumnNameToRelationships[column.Settings.Ref.To]
 			fromRefTagStr, found := column.Annotations[GoTagFromRefAnnotation]
 			fromTags := structtag.Tags{}
 			if found {

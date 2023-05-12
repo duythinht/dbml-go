@@ -1,16 +1,21 @@
-Table casbin_rule {
+Table cities {
   id bigint [pk, increment]
-  ptype varchar(100) [not null, default: ``]
-  v0 varchar(100) [not null, default: ``]
-  v1 varchar(100) [not null, default: ``]
-  v2 varchar(100) [not null, default: ``]
-  v3 varchar(100) [not null, default: ``]
-  v4 varchar(100) [not null, default: ``]
-  v5 varchar(100) [not null, default: ``]
-  v6 varchar(25) [not null, default: ``]
-  v7 varchar(25) [not null, default: ``]
+  name varchar(255)
+  code varchar(255) [not null, unique]
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table districts {
+  id bigint [pk, increment]
+  code varchar(255) [not null, unique]
+  name varchar(255)
+  city_id bigint [ref: > cities.id, not null]
+  my_city_id bigint [ref: > cities.id, not null]
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP`]
 
   Indexes {
-    (ptype, v0, v1, v2, v3, v4, v5, v6, v7) [unique, name: 'idx_casbin_rules']
+    city_id [name: 'idx_districts_city_id']
   }
 }
