@@ -445,6 +445,7 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 			// support inline relationship
 			fullColumnID := getFullColumnName(table.Name, column.Name)
 			toRelationships := toColumnNameToRelationships[fullColumnID]
+			fromRelationships := fromColumnNameToRelationships[fullColumnID]
 			fromRefTagStr, found := column.Annotations[GoTagFromRefAnnotation]
 			fromTags := structtag.Tags{}
 			if found {
@@ -474,7 +475,6 @@ func (g *generator) getFullRelationShips() (toColumnNameToRelationships map[stri
 				})
 
 				reverseRefType := reverseRefType(refType)
-				fromRelationships := fromColumnNameToRelationships[column.Settings.Ref.To]
 				fromRelationships = append(fromRelationships, core.Relationship{
 					From: column.Settings.Ref.To,
 					To:   fullColumnID,
