@@ -71,7 +71,7 @@ func Initialism(s string) string {
 			w = i + 1
 			buf.WriteRune('_')
 		}
-		if unicode.IsLower(runes[i]) && (i == len(runes)-1 || runes[i+1] == '_' || unicode.IsUpper(runes[i+1])) {
+		if (unicode.IsLower(runes[i]) || unicode.IsNumber(runes[i])) && (i == len(runes)-1 || runes[i+1] == '_' || unicode.IsUpper(runes[i+1])) {
 			word := string(runes[w : i+1])
 			if u := strings.ToUpper(word); commonInitialisms[u] && unicode.IsUpper(runes[w]) {
 				buf.WriteString(u)

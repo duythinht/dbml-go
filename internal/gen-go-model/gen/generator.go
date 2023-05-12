@@ -110,7 +110,7 @@ type fieldDefinition struct {
 
 func leftOf(str string, strToSplit string) string {
 	idx := strings.LastIndex(str, strToSplit)
-	if idx == 0 {
+	if idx == -1 {
 		return ""
 	}
 	return str[:idx]
