@@ -117,7 +117,11 @@ func (s *Scanner) scanString(quo rune) (token.Token, string) {
 	case '"':
 		lit, ok := s.scanTo(quo)
 		if ok {
-			return token.DSTRING, lit
+			if token.Lookup(lit) == token.IDENT {
+				return token.IDENT, lit
+			} else {
+				return token.STRING, lit
+			}
 		}
 		return token.ILLEGAL, lit
 	case '\'':
