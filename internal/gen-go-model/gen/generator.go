@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/duythinht/dbml-go/core"
-	"github.com/duythinht/dbml-go/internal/gen-go-model/genutil"
+	"github.com/tbobek/dbml-go/core"
+	"github.com/tbobek/dbml-go/internal/gen-go-model/genutil"
 )
 
 type generator struct {

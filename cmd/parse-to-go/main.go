@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/duythinht/dbml-go/parser"
-	"github.com/duythinht/dbml-go/scanner"
+	"github.com/tbobek/dbml-go/parser"
+	"github.com/tbobek/dbml-go/scanner"
 )
 
 func main() {
